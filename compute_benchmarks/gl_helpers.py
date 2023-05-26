@@ -4,7 +4,7 @@
 __all__ = ['computeShader', 'createTexture', 'downloadTexture', 'downloadTextureFloat', 'showLastShaderDisassembly',
            'showShaderDisassembly']
 
-# %% ../nbs/00_gl_helpers.ipynb 3
+# %% ../nbs/00_gl_helpers.ipynb 5
 import os
 import time
 import ctypes
@@ -13,23 +13,30 @@ import re
 
 import numpy as np
 from PIL import Image
-import OpenGL.GLES3 as gl
-from OpenGL.GL.shaders import compileProgram,compileShader
+try:
+    import OpenGL.GLES3 as gl
+    from OpenGL.GL.shaders import compileProgram,compileShader
+except:
+    class gl:
+        GL_RGBA32F = None
+        def glGenFramebuffers(n):
+            pass
+    #import OpenGL.GL as gl
 
-# %% ../nbs/00_gl_helpers.ipynb 4
+# %% ../nbs/00_gl_helpers.ipynb 6
 os.environ['PAN_MESA_DEBUG'] = 'trace,sync'
 os.system("rm -f pandecode.dump.*")
-_egl = ctypes.cdll.LoadLibrary('./test-egl.so')
-assert(_egl.setup_gl() == 0)
+# _egl = ctypes.cdll.LoadLibrary('./test-egl.so')
+# assert(_egl.setup_gl() == 0)
 
-# %% ../nbs/00_gl_helpers.ipynb 5
+# %% ../nbs/00_gl_helpers.ipynb 7
 _shaders = {}
 def computeShader(src):
     shader = _shaders.get(src) or compileProgram(compileShader(src, gl.GL_COMPUTE_SHADER))
     gl.glUseProgram(shader)
     _shaders[src] = shader
 
-# %% ../nbs/00_gl_helpers.ipynb 6
+# %% ../nbs/00_gl_helpers.ipynb 8
 _textures = {}
 def createTexture(w, h, texid=0, fmt=gl.GL_RGBA32F, output=True, src=None):
     global shader_format
@@ -56,7 +63,7 @@ def createTexture(w, h, texid=0, fmt=gl.GL_RGBA32F, output=True, src=None):
         gl.glBindImageTexture(texid, texture, 0, gl.GL_FALSE, 0, gl.GL_READ_ONLY, fmt)
     return texture
 
-# %% ../nbs/00_gl_helpers.ipynb 7
+# %% ../nbs/00_gl_helpers.ipynb 9
 _fbo = gl.glGenFramebuffers(1);
 def downloadTexture(texture, w, h):
     gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, _fbo);
@@ -76,7 +83,7 @@ def downloadTextureFloat(texture, w, h):
     gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, 0);
     return pixels
 
-# %% ../nbs/00_gl_helpers.ipynb 8
+# %% ../nbs/00_gl_helpers.ipynb 10
 def showLastShaderDisassembly():
     dumpfd = open(sorted(glob.glob('pandecode.dump.*'))[-1])
     dump = dumpfd.read()
