@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://collabora.github.io/compute-benchmarks/x2. gridrun.html</loc>
+    <lastmod>2023-05-26T18:18:34.901Z</lastmod>
+  </url>
+  <url>
+    <loc>https://collabora.github.io/compute-benchmarks/x1. gl_helpers.html</loc>
+    <lastmod>2023-05-26T18:18:35.677Z</lastmod>
+  </url>
+  <url>
+    <loc>https://collabora.github.io/compute-benchmarks/a1. estimate gflops (dot products, no loops).html</loc>
+    <lastmod>2023-05-26T18:18:36.525Z</lastmod>
+  </url>
+  <url>
+    <loc>https://collabora.github.io/compute-benchmarks/index.html</loc>
+    <lastmod>2023-05-26T18:18:37.017Z</lastmod>
+  </url>
+  <url>
+    <loc>https://collabora.github.io/compute-benchmarks/a2. estimate gflops (iterative computation, fractals).html</loc>
+    <lastmod>2023-05-26T18:18:37.581Z</lastmod>
+  </url>
+</urlset>

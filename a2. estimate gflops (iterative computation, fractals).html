@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.353">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Benchmarking mobile GPUs - Estimate GFLOPS (iterative computation, fractals)</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="Benchmarking mobile GPUs - Estimate GFLOPS (iterative computation, fractals)">
+<meta property="og:description" content="">
+<meta property="og:image" content="https://collabora.github.io/compute-benchmarks/imgs/julia-gflops.png">
+<meta property="og:site-name" content="Benchmarking mobile GPUs">
+<meta property="og:image:height" content="636">
+<meta property="og:image:width" content="1762">
+<meta name="twitter:title" content="Benchmarking mobile GPUs - Estimate GFLOPS (iterative computation, fractals)">
+<meta name="twitter:description" content="">
+<meta name="twitter:image" content="https://collabora.github.io/compute-benchmarks/imgs/julia-gflops.png">
+<meta name="twitter:image-height" content="636">
+<meta name="twitter:image-width" content="1762">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-sidebar floating nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a href="./index.html" class="navbar-brand navbar-brand-logo">
+    <img src="./imgs/logo.svg" alt="" class="navbar-logo">
+    </a>
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Benchmarking mobile GPUs</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools ms-auto">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./a1. estimate gflops (dot products, no loops).html">Experiments</a></li><li class="breadcrumb-item"><a href="./a2. estimate gflops (iterative computation, fractals).html">Estimate GFLOPS (iterative computation, fractals)</a></li></ol></nav>
+      <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+      </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal sidebar-navigation floating overflow-auto">
+        <div class="sidebar-tools-main">
+    <a href="https://twitter.com/jpclap" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-twitter"></i></a>
+    <a href="https://github.com/collabora/compute-benchmarks" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-github"></i></a>
+</div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">How much does a GPU really pack?</span></a>
+  </div>
+</li>
+        <li class="px-0"><hr class="sidebar-divider hi "></li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true">
+ <span class="menu-text">Experiments</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./a1. estimate gflops (dot products, no loops).html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Estimate GFLOPS (dot products, no loops)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./a2. estimate gflops (iterative computation, fractals).html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Estimate GFLOPS (iterative computation, fractals)</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="px-0"><hr class="sidebar-divider hi "></li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-expanded="true">
+ <span class="menu-text">Helper utilities</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./x1. gl_helpers.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">OpenGL helpers</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./x2. gridrun.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Grid run</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#test-6-julia-fractal" id="toc-test-6-julia-fractal" class="nav-link active" data-scroll-target="#test-6-julia-fractal">Test 6: Julia fractal</a></li>
+  <li><a href="#test-7-julia-fractal-4-way-unroll" id="toc-test-7-julia-fractal-4-way-unroll" class="nav-link" data-scroll-target="#test-7-julia-fractal-4-way-unroll">Test 7: Julia fractal (4-way unroll)</a></li>
+  </ul>
+<div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/collabora/compute-benchmarks/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Estimate GFLOPS (iterative computation, fractals)</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<p>The dot product approach did not succeed in squeezeing the most of the ALU units in the GPU. Here we will try to do iterative computation in a loop. The difficulty is we have to make sure it is not easy for the compiler to optimize it away (so the results have to be unpredictable).</p>
+<p>The simplest algorithm that satisfies this is probably the Julia fractal which consists of hundreds of complex number multiplications and each pixel gets wildly different (chaotic) results. This gives us a lot of arithmetic with barely any load/store operations (and pretty pictures).</p>
+<p><img src="imgs/julia-gflops.png" class="img-fluid"></p>
+<p>I am only counting the instructions in the inner loop here (since we run it 4000 times so the rest does not really matter). It’s surprising how many non-FMA instructions are required to get the job done but we get 74.75 GOPS. Does it add up?</p>
+<p>The marketing for this SoC seems to talk about G52 MP4 but the hardware register report it having only 2 cores. The most likely explanation is that it has 2 cores with 3 execution units with 8-way SIMD ALU (note that a G52 could also have a 4-way ALU). Since the ALU executes two operations per cycle (but only one of them may be a multiplication) this gives us 96 operations per clock ✕ 800MHz = 76,8 GOPS (for a maximum of 38,4 multiplication GFLOPS).</p>
+<p><img alt="Dark" src="imgs/mali-ALU.png" width="30%"></p>
+<p>The calculation assumed there are completely no overheads and latencies of any kind so our 74.75 GOPS do look pretty good.</p>
+<section id="test-6-julia-fractal" class="level2">
+<h2 class="anchored" data-anchor-id="test-6-julia-fractal">Test 6: Julia fractal</h2>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Warning
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The <code>FMA %</code> numbers printed below are for the whole shader code. Since we have loops, they do not apply and we have to inspect the disassembly, find the loop and manually count the ratio.</p>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>wh <span class="op">=</span> <span class="dv">256</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test(wh<span class="op">=</span>wh, localx<span class="op">=</span><span class="dv">1</span>, localy<span class="op">=</span><span class="dv">1</span>, membw<span class="op">=</span><span class="va">False</span>):</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">global</span> intex, outtex, source</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    w,h <span class="op">=</span> wh,wh</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> localx <span class="op">*</span> localy <span class="op">&gt;</span> <span class="dv">256</span>: <span class="cf">return</span> <span class="bu">float</span>(<span class="st">'nan'</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    outtex <span class="op">=</span> createTexture(w, h, texid<span class="op">=</span><span class="dv">1</span>, fmt<span class="op">=</span>gl.GL_RGBA32F)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    source <span class="op">=</span> <span class="ss">f"""</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="ss">    #version 310 es</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="ss">    precision highp float;</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="ss">    layout(local_size_x = </span><span class="sc">{</span>localx<span class="sc">}</span><span class="ss">, local_size_y = </span><span class="sc">{</span>localy<span class="sc">}</span><span class="ss">) in;</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="ss">    layout(rgba32f, binding = 1) uniform mediump writeonly image2D img_output;</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="ss">    layout(location = 2) uniform int iterations;</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="ss">    void main() </span><span class="ch">{{</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="ss">      vec2 p = (vec2(gl_GlobalInvocationID.xy) / vec2(</span><span class="sc">{</span>w<span class="sc">}</span><span class="ss">.,</span><span class="sc">{</span>h<span class="sc">}</span><span class="ss">.) - vec2(0.5)) * vec2(3.);</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="ss">      int r = 0;</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="ss">      for(int i = 0; i &lt; iterations; i++) </span><span class="ch">{{</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="ss">        if(dot(p, p) &lt; 10.) </span><span class="ch">{{</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="ss">          r++;</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="ss">        </span><span class="ch">}}</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="ss">        p = vec2(p.x*p.x - p.y*p.y + 0.7885, 2.*p.x*p.y);</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="ss">      </span><span class="ch">}}</span><span class="ss"> </span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="ss">      </span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="ss">      float n = float(r) / float(iterations) * 4.;</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="ss">      </span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="ss">      imageStore(img_output, ivec2(gl_GlobalInvocationID.xy),</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="ss">              vec4(0.5-cos(n*75.0)/2.0,0.5-cos(n* 120.0)/2.0,0.5-cos(n*165.0)/2.0,1.0));</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="ss">    </span><span class="ch">}}</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="ss">    """</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> membw:</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span>.join([<span class="ss">f"</span><span class="sc">{</span>n<span class="op">+</span><span class="dv">1</span><span class="sc">: 5d}</span><span class="ss">  </span><span class="sc">{</span>line<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> n, line <span class="kw">in</span> <span class="bu">enumerate</span>(source.split(<span class="st">'</span><span class="ch">\n</span><span class="st">'</span>))]))</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    computeShader(source)</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    ITERS <span class="op">=</span> <span class="dv">1000</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    gl.glUniform1i(<span class="dv">2</span>, ITERS)</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    start <span class="op">=</span> time.perf_counter()</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">50</span>):</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>        gl.glDispatchCompute(w<span class="op">//</span>localx, h<span class="op">//</span>localy, <span class="dv">1</span>)</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>        <span class="co"># make sure writing to image has finished before read</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>        gl.glMemoryBarrier(gl.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT)</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>    gl.glFinish()</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>    elapsed <span class="op">=</span> (time.perf_counter() <span class="op">-</span> start)<span class="op">/</span><span class="dv">50</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>    MACs <span class="op">=</span> <span class="dv">13</span><span class="op">*</span>ITERS<span class="op">*</span>w<span class="op">*</span>h</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> membw:</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>MACs <span class="op">/</span> elapsed <span class="op">/</span> <span class="fl">1e9</span><span class="sc">:.2f}</span><span class="ss"> GFLOPS   </span><span class="sc">{</span>w<span class="op">*</span>h<span class="op">*</span><span class="dv">4</span><span class="op">*</span><span class="dv">4</span> <span class="op">/</span> elapsed <span class="op">/</span> <span class="dv">1024</span> <span class="op">/</span> <span class="dv">1024</span><span class="sc">:.2f}</span><span class="ss"> MB/s  </span><span class="sc">{</span>elapsed <span class="op">*</span> <span class="fl">1e3</span><span class="sc">:.2f}</span><span class="ss"> ms"</span>)</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> MACs <span class="op">/</span> elapsed <span class="op">/</span> <span class="fl">1e9</span></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>test()</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>gflops <span class="op">=</span> test(localx<span class="op">=</span><span class="dv">16</span>, localy<span class="op">=</span><span class="dv">16</span>, membw<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>showLastShaderDisassembly()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    1  
+    2      #version 310 es
+    3      precision highp float;
+    4  
+    5      layout(local_size_x = 16, local_size_y = 16) in;
+    6      layout(rgba32f, binding = 1) uniform mediump writeonly image2D img_output;
+    7      layout(location = 2) uniform int iterations;
+    8  
+    9      void main() {
+   10        vec2 p = (vec2(gl_GlobalInvocationID.xy) / vec2(256.,256.) - vec2(0.5)) * vec2(3.);
+   11        int r = 0;
+   12  
+   13        for(int i = 0; i &lt; iterations; i++) {
+   14          if(dot(p, p) &lt; 10.) {
+   15            r++;
+   16          }
+   17          p = vec2(p.x*p.x - p.y*p.y + 0.7885, 2.*p.x*p.y);
+   18        } 
+   19        
+   20        float n = float(r) / float(iterations) * 4.;
+   21        
+   22        imageStore(img_output, ivec2(gl_GlobalInvocationID.xy),
+   23                vec4(0.5-cos(n*75.0)/2.0,0.5-cos(n* 120.0)/2.0,0.5-cos(n*165.0)/2.0,1.0));
+   24      }
+   25      
+37.42 GFLOPS   43.92 MB/s  22.77 ms
+FMAs: 57.69% (30 / 52)
+
+clause_0:
+ds(0) nbb r_uncond ncph 
+{
+    *NOP t0
+    +U32_TO_F32 t1, r60
+    *FMA.f32 r0:t0, t1, 0x3b800000 /* 0.003906 */, 0xbf000000 /* -0.500000 */
+    +U32_TO_F32 t1, r61
+    *FMA.f32 r1:t0, t1, 0x3b800000 /* 0.003906 */, 0xbf000000 /* -0.500000 */
+    +NOP t1
+    *FMA.f32 r0:t0, r0, 0x40400000 /* 3.000000 */, #0.neg
+    +NOP t1
+    *FMA.f32 r1:t0, r1, 0x40400000 /* 3.000000 */, #0.neg
+    +MOV.i32 r2:t1, 0x00000000 /* 0.000000 */
+    *NOP t0
+    +MOV.i32 r3:t1, t1
+}
+
+clause_6:
+ds(0) nbb r_uncond ncph 
+{
+    *NOP t0
+    +ICMP.s32.m1.ge t1, r2, u0.w0
+    *NOP t0
+    +BRANCHZ.i16.eq t1, t1.h0, clause_11
+}
+
+clause_9:
+ds(0) nbb 
+{
+    *NOP t0
+    +JUMP t1, clause_21
+}
+
+clause_11:
+ds(0) nbb ncph 
+{
+    *NOP t0
+    +MOV.i32 t1, r1
+    *FMA.f32 r4:t0, r1, t1, #0.neg
+    +MOV.i32 t1, r0
+    *FMA.f32 r5:t0, r0, t1, t0
+    +NOP t1
+}
+
+clause_14:
+ds(0) nbb r_uncond 
+{
+    *NOP t0
+    +IADD.s32 t1, r3, 0x00000001 /* 0.000000 */
+    *FCMP.f32.lt.m1 t0, r5, 0x41200000 /* 10.000000 */
+    +MUX.i32 r3:t1, r3, t1, t
+    *NOP t0
+    +MOV.i32 t1, r0
+    *FMA.f32 t0, r0, t1, 0x3f49db23 /* 0.788500 */
+    +FADD.f32 r4:t1, t, r4.neg
+    *MOV.i32 t0, r0
+    +FADD.f32 t1, r0, t
+    *FMA.f32 r1:t0, t1, r1, #0.neg
+    +NOP t1
+    *MOV.i32 t0, r2
+    +IADD.s32 r2:t1, t, 0x00000001 /* 0.000000 */
+    *MOV.i32 r0:t0, r4
+    +JUMP t1, clause_6
+}
+
+clause_21:
+ds(0) nbb ncph 
+{
+    *MOV.i32 t0, r3
+    +S32_TO_F32 r0:t1, t
+    *NOP t0
+    +S32_TO_F32 t1, u0.w0
+    *NOP t0
+    +FRCP.f32 t1, t1
+    *FMA.f32 r0:t0, r0, t1, #0.neg
+    +NOP t1
+}
+
+clause_24:
+ds(0) nbb ncph 
+{
+    *FMA.f32 r1:t0, 0x43960000 /* 300.000000 */, r0, #0.neg
+    +NOP t1
+    *FMA.f32 r2:t0, t0, 0x3f22f98c /* 0.636620 */, 0x49400000 /* 786432.000000 */
+    +FADD.f32 t1, t, 0x49400000 /* 786432.000000 */.neg
+    *FMA.f32 r1:t0, t1, 0xbfc90fd0 /* -1.570795 */, r1
+    +FSIN_TABLE.u6 r3:t1, t0
+    *FMA_RSCALE.f32 t0, t0, t0, #0.neg, 0xffffffff /* -nan */
+    +FCOS_TABLE.u6 r2:t1, r2
+    *FMA.f32 t0, t0, t1.neg, #0.neg
+    +NOP t1
+    *FMA.f32.clamp_m1_1 t0, r1, r3.neg, t0
+    +NOP t1
+    *NOP t0
+    +FADD.f32 r1:t1, t0, r2
+    *FMA.f32 r2:t0, 0x43f00000 /* 480.000000 */, r0, #0.neg
+    +NOP t1
+}
+
+clause_31:
+ds(0) nbb ncph next_attr 
+{
+    *FMA.f32 r3:t0, r2, 0x3f22f98c /* 0.636620 */, 0x49400000 /* 786432.000000 */
+    +FADD.f32 t1, t, 0x49400000 /* 786432.000000 */.neg
+    *FMA.f32 r2:t0, t1, 0xbfc90fd0 /* -1.570795 */, r2
+    +FSIN_TABLE.u6 r4:t1, t0
+    *FMA_RSCALE.f32 t0, t0, t0, #0.neg, 0xffffffff /* -nan */
+    +FCOS_TABLE.u6 r3:t1, r3
+    *FMA.f32 t0, t0, t1.neg, #0.neg
+    +NOP t1
+    *FMA.f32.clamp_m1_1 t0, r2, r4.neg, t0
+    +NOP t1
+    *FMA.f32 r0:t0, 0x44250000 /* 660.000000 */, r0, #0.neg
+    +FADD.f32 r2:t1, t0, r3
+    *FMA.f32 r3:t0, t0, 0x3f22f98c /* 0.636620 */, 0x49400000 /* 786432.000000 */
+    +NOP t1
+    *NOP t0
+    +FADD.f32 r4:t1, t0, 0x49400000 /* 786432.000000 */.neg
+}
+
+clause_38:
+ds(0) nbb attr ncph next_store dwb(0) 
+{
+    *FMA.f32 r0:t0, r4, 0xbfc90fd0 /* -1.570795 */, r0
+    +FSIN_TABLE.u6 r4:t1, r3
+    *FMA_RSCALE.f32 t0, t0, t0, #0.neg, 0xffffffff /* -nan */
+    +FCOS_TABLE.u6 r3:t1, r3
+    *FMA.f32 t0, t0, t1.neg, #0.neg
+    +NOP t1
+    *FMA.f32.clamp_m1_1 t0, r0, r4.neg, t0
+    +NOP t1
+    *NOP t0
+    +FADD.f32 t1, t0, r3
+    *FMA.f32 t0, t1, 0x3f000000 /* 0.500000 */, #0.neg
+    +FADD.f32 t1, 0x3f000000 /* 0.500000 */, t.neg
+    *MOV.i32 r3:t0, t1
+    +MKVEC.v2i16 t1, r60, r61
+    *DTSEL_IMM.attribute_1 t0, t1
+    +LEA_ATTR_TEX.f32 t1, t, #0.x, #0.x, @r5
+}
+
+clause_45:
+ds(0) eos store 
+{
+    *FMA.f32 t0, r1, 0x3f000000 /* 0.500000 */, #0.neg
+    +FADD.f32 r1:t1, 0x3f000000 /* 0.500000 */, t.neg
+    *FMA.f32 t0, r2, 0x3f000000 /* 0.500000 */, #0.neg
+    +FADD.f32 r2:t1, 0x3f000000 /* 0.500000 */, t.neg
+    *NOP t0
+    +MOV.i32 r4:t1, 0x3f800000 /* 1.000000 */
+    *NOP t0
+    +ST_CVT.v4 t1, r5, r6, r7, @r1
+}
+
+shader11948 - MESA_SHADER_COMPUTE shader: 0 inst, 0 bundles, 0 quadwords, 0 registers, 4 threads, 0 loops, 0:0 spills:fills
+</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>downloadTexture(outtex, <span class="dv">256</span>, <span class="dv">256</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<p><img src="A2. Estimate GFLOPS (iterative computation, fractals)_files/figure-html/cell-3-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> grid_run(test, localx<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">8</span>,<span class="dv">16</span>,<span class="dv">32</span>,<span class="dv">64</span>,<span class="dv">128</span>,<span class="dv">256</span>], localy<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">8</span>,<span class="dv">16</span>,<span class="dv">32</span>,<span class="dv">64</span>,<span class="dv">128</span>,<span class="dv">256</span>])</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>grid_show(r, colorfun<span class="op">=</span><span class="kw">lambda</span> x: <span class="op">-</span>np.log(x))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>command stream to file pandecode.dump.0208
+pandecode: dump command stream to file pandecode.dump.0209
+pandecode: dump command stream to file pandecode.dump.0210
+pandecode: dump command stream to file pandecode.dump.0211
+pandecode: dump command stream to file pandecode.dump.0212
+pandecode: dump command stream to file pandecode.dump.0213
+pandecode: dump command stream to file pandecode.dump.0214
+pandecode: dump command stream to file pandecode.dump.0215
+pandecode: dump command stream to file pandecode.dump.0216
+pandecode: dump command stream to file pandecode.dump.0217
+pandecode: dump command stream to file pandecode.dump.0218
+pandecode: dump command stream to file pandecode.dump.0219
+pandecode: dump command stream to file pandecode.dump.0220
+pandecode: dump command stream to file pandecode.dump.0221
+pandecode: dump command stream to file pandecode.dump.0222
+pandecode: dump command stream to file pandecode.dump.0223
+pandecode: dump command stream to file pandecode.dump.0224
+pandecode: dump command stream to file pandecode.dump.0225
+pandecode: dump command stream to file pandecode.dump.0226
+pandecode: dump command stream to file pandecode.dump.0227
+pandecode: dump command stream to file pandecode.dump.0228
+pandecode: dump command stream to file pandecode.dump.0229
+pandecode: dump command stream to file pandecode.dump.0230
+pandecode: dump command stream to file pandecode.dump.0231
+pandecode: dump command stream to file pandecode.dump.0232
+pandecode: dump command stream to file pandecode.dump.0233
+pandecode: dump command stream to file pandecode.dump.0234
+pandecode: dump command stream to file pandecode.dump.0235
+pandecode: dump command stream to file pandecode.dump.0236
+pandecode: dump command stream to file pandecode.dump.0237
+pandecode: dump command stream to file pandecode.dump.0238
+pandecode: dump command stream to file pandecode.dump.0239
+pandecode: dump command stream to file pandecode.dump.0240
+pandecode: dump command stream to file pandecode.dump.0241
+pandecode: dump command stream to file pandecode.dump.0242
+pandecode: dump command stream to file pandecode.dump.0243
+pandecode: dump command stream to file pandecode.dump.0244
+pandecode: dump command stream to file pandecode.dump.0245
+pandecode: dump command stream to file pandecode.dump.0246
+pandecode: dump command stream to file pandecode.dump.0247
+pandecode: dump command stream to file pandecode.dump.0248
+pandecode: dump command stream to file pandecode.dump.0249
+pandecode: dump command stream to file pandecode.dump.0250
+pandecode: dump command stream to file pandecode.dump.0251
+pandecode: dump command stream to file pandecode.dump.0252
+pandecode: dump command stream to file pandecode.dump.0253
+pandecode: dump command stream to file pandecode.dump.0254
+pandecode: dump command stream to file pandecode.dump.0255
+pandecode: dump command stream to file pandecode.dump.0256
+pandecode: dump command stream to file pandecode.dump.0257
+pandecode: dump command stream to file pandecode.dump.0258
+pandecode: dump command stream to file pandecode.dump.0259
+pandecode: dump command stream to file pandecode.dump.0260
+pandecode: dump command stream to file pandecode.dump.0261
+pandecode: dump command stream to file pandecode.dump.0262
+pandecode: dump command stream to file pandecode.dump.0263
+pandecode: dump command stream to file pandecode.dump.0264
+pandecode: dump command stream to file pandecode.dump.0265
+pandecode: dump command stream to file pandecode.dump.0266
+pandecode: dump command stream to file pandecode.dump.0267
+pandecode: dump command stream to file pandecode.dump.0268
+pandecode: dump command stream to file pandecode.dump.0269
+pandecode: dump command stream to file pandecode.dump.0270
+pandecode: dump command stream to file pandecode.dump.0271
+pandecode: dump command stream to file pandecode.dump.0272
+pandecode: dump command stream to file pandecode.dump.0273
+pandecode: dump command stream to file pandecode.dump.0274
+pandecode: dump command stream to file pandecode.dump.0275
+pandecode: dump command stream to file pandecode.dump.0276
+pandecode: dump command stream to file pa</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="A2. Estimate GFLOPS (iterative computation, fractals)_files/figure-html/cell-4-output-2.png" class="img-fluid"></p>
+</div>
+</div>
+</section>
+<section id="test-7-julia-fractal-4-way-unroll" class="level2">
+<h2 class="anchored" data-anchor-id="test-7-julia-fractal-4-way-unroll">Test 7: Julia fractal (4-way unroll)</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>wh <span class="op">=</span> <span class="dv">256</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test(wh<span class="op">=</span>wh, localx<span class="op">=</span><span class="dv">1</span>, localy<span class="op">=</span><span class="dv">1</span>, membw<span class="op">=</span><span class="va">False</span>):</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">global</span> intex, outtex, source</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    w,h <span class="op">=</span> wh,wh</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> localx <span class="op">*</span> localy <span class="op">&gt;</span> <span class="dv">256</span>: <span class="cf">return</span> <span class="bu">float</span>(<span class="st">'nan'</span>)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    outtex <span class="op">=</span> createTexture(w, h, texid<span class="op">=</span><span class="dv">1</span>, fmt<span class="op">=</span>gl.GL_RGBA32F)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    source <span class="op">=</span> <span class="ss">f"""</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="ss">    #version 310 es</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="ss">    precision highp float;</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="ss">    layout(local_size_x = </span><span class="sc">{</span>localx<span class="sc">}</span><span class="ss">, local_size_y = </span><span class="sc">{</span>localy<span class="sc">}</span><span class="ss">) in;</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="ss">    layout(rgba32f, binding = 1) uniform mediump writeonly image2D img_output;</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="ss">    layout(location = 2) uniform int iterations;</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="ss">    void main() </span><span class="ch">{{</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="ss">      vec2 p = (vec2(gl_GlobalInvocationID.xy) / vec2(</span><span class="sc">{</span>w<span class="sc">}</span><span class="ss">.,</span><span class="sc">{</span>h<span class="sc">}</span><span class="ss">.) - vec2(0.5)) * vec2(3.);</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="ss">      int r = 0;</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="ss">      for(int i = 0; i &lt; iterations / 4; i++) </span><span class="ch">{{</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="ss">        if(dot(p, p) &lt; 10.) </span><span class="ch">{{</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a><span class="ss">          r++;</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="ss">        </span><span class="ch">}}</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a><span class="ss">        p = vec2(p.x*p.x - p.y*p.y + 0.7885, 2.*p.x*p.y);</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a><span class="ss">        if(dot(p, p) &lt; 10.) </span><span class="ch">{{</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a><span class="ss">          r++;</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a><span class="ss">        </span><span class="ch">}}</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a><span class="ss">        p = vec2(p.x*p.x - p.y*p.y + 0.7885, 2.*p.x*p.y);</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a><span class="ss">        if(dot(p, p) &lt; 10.) </span><span class="ch">{{</span></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a><span class="ss">          r++;</span></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a><span class="ss">        </span><span class="ch">}}</span></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a><span class="ss">        p = vec2(p.x*p.x - p.y*p.y + 0.7885, 2.*p.x*p.y);</span></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a><span class="ss">        if(dot(p, p) &lt; 10.) </span><span class="ch">{{</span></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a><span class="ss">          r++;</span></span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a><span class="ss">        </span><span class="ch">}}</span></span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a><span class="ss">        p = vec2(p.x*p.x - p.y*p.y + 0.7885, 2.*p.x*p.y);</span></span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a><span class="ss">      </span><span class="ch">}}</span><span class="ss"> </span></span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a><span class="ss">      </span></span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a><span class="ss">      float n = float(r) / float(iterations) * 4.;</span></span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a><span class="ss">      </span></span>
+<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a><span class="ss">      imageStore(img_output, ivec2(gl_GlobalInvocationID.xy),</span></span>
+<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a><span class="ss">              vec4(0.5-cos(n*75.0)/2.0,0.5-cos(n* 120.0)/2.0,0.5-cos(n*165.0)/2.0,1.0));</span></span>
+<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a><span class="ss">    </span><span class="ch">}}</span></span>
+<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a><span class="ss">    """</span></span>
+<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> membw:</span>
+<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span>.join([<span class="ss">f"</span><span class="sc">{</span>n<span class="op">+</span><span class="dv">1</span><span class="sc">: 5d}</span><span class="ss">  </span><span class="sc">{</span>line<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> n, line <span class="kw">in</span> <span class="bu">enumerate</span>(source.split(<span class="st">'</span><span class="ch">\n</span><span class="st">'</span>))]))</span>
+<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a>    computeShader(source)</span>
+<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a>    ITERS <span class="op">=</span> <span class="dv">1000</span></span>
+<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a>    gl.glUniform1i(<span class="dv">2</span>, ITERS)</span>
+<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a>    start <span class="op">=</span> time.perf_counter()</span>
+<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">50</span>):</span>
+<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a>        gl.glDispatchCompute(w<span class="op">//</span>localx, h<span class="op">//</span>localy, <span class="dv">1</span>)</span>
+<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a>        <span class="co"># make sure writing to image has finished before read</span></span>
+<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a>        gl.glMemoryBarrier(gl.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT)</span>
+<span id="cb6-54"><a href="#cb6-54" aria-hidden="true" tabindex="-1"></a>    gl.glFinish()</span>
+<span id="cb6-55"><a href="#cb6-55" aria-hidden="true" tabindex="-1"></a>    elapsed <span class="op">=</span> (time.perf_counter() <span class="op">-</span> start)<span class="op">/</span><span class="dv">50</span></span>
+<span id="cb6-56"><a href="#cb6-56" aria-hidden="true" tabindex="-1"></a>    output <span class="op">=</span> downloadTextureFloat(outtex, w, h)</span>
+<span id="cb6-57"><a href="#cb6-57" aria-hidden="true" tabindex="-1"></a>    MACs <span class="op">=</span> <span class="dv">32</span><span class="op">*</span>ITERS<span class="op">/</span><span class="dv">4</span><span class="op">*</span>w<span class="op">*</span>h</span>
+<span id="cb6-58"><a href="#cb6-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-59"><a href="#cb6-59" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> membw:</span>
+<span id="cb6-60"><a href="#cb6-60" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>MACs <span class="op">/</span> elapsed <span class="op">/</span> <span class="fl">1e9</span><span class="sc">:.2f}</span><span class="ss"> GFLOPS   </span><span class="sc">{</span>w<span class="op">*</span>h<span class="op">*</span><span class="dv">4</span><span class="op">*</span><span class="dv">4</span> <span class="op">/</span> elapsed <span class="op">/</span> <span class="dv">1024</span> <span class="op">/</span> <span class="dv">1024</span><span class="sc">:.2f}</span><span class="ss"> MB/s  </span><span class="sc">{</span>elapsed <span class="op">*</span> <span class="fl">1e3</span><span class="sc">:.2f}</span><span class="ss"> ms"</span>)</span>
+<span id="cb6-61"><a href="#cb6-61" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-62"><a href="#cb6-62" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> MACs <span class="op">/</span> elapsed <span class="op">/</span> <span class="fl">1e9</span></span>
+<span id="cb6-63"><a href="#cb6-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-64"><a href="#cb6-64" aria-hidden="true" tabindex="-1"></a>test()</span>
+<span id="cb6-65"><a href="#cb6-65" aria-hidden="true" tabindex="-1"></a>gflops <span class="op">=</span> test(localx<span class="op">=</span><span class="dv">16</span>, localy<span class="op">=</span><span class="dv">16</span>, membw<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb6-66"><a href="#cb6-66" aria-hidden="true" tabindex="-1"></a>showLastShaderDisassembly()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    1  
+    2      #version 310 es
+    3      precision highp float;
+    4  
+    5      layout(local_size_x = 16, local_size_y = 16) in;
+    6      layout(rgba32f, binding = 1) uniform mediump writeonly image2D img_output;
+    7      layout(location = 2) uniform int iterations;
+    8  
+    9      void main() {
+   10        vec2 p = (vec2(gl_GlobalInvocationID.xy) / vec2(256.,256.) - vec2(0.5)) * vec2(3.);
+   11        int r = 0;
+   12  
+   13        for(int i = 0; i &lt; iterations / 4; i++) {
+   14          if(dot(p, p) &lt; 10.) {
+   15            r++;
+   16          }
+   17          p = vec2(p.x*p.x - p.y*p.y + 0.7885, 2.*p.x*p.y);
+   18          if(dot(p, p) &lt; 10.) {
+   19            r++;
+   20          }
+   21          p = vec2(p.x*p.x - p.y*p.y + 0.7885, 2.*p.x*p.y);
+   22          if(dot(p, p) &lt; 10.) {
+   23            r++;
+   24          }
+   25          p = vec2(p.x*p.x - p.y*p.y + 0.7885, 2.*p.x*p.y);
+   26          if(dot(p, p) &lt; 10.) {
+   27            r++;
+   28          }
+   29          p = vec2(p.x*p.x - p.y*p.y + 0.7885, 2.*p.x*p.y);
+   30        } 
+   31        
+   32        float n = float(r) / float(iterations) * 4.;
+   33        
+   34        imageStore(img_output, ivec2(gl_GlobalInvocationID.xy),
+   35                vec4(0.5-cos(n*75.0)/2.0,0.5-cos(n* 120.0)/2.0,0.5-cos(n*165.0)/2.0,1.0));
+   36      }
+   37      
+36.76 GFLOPS   70.12 MB/s  14.26 ms
+FMAs: 59.15% (42 / 71)
+
+clause_0:
+ds(0) nbb r_uncond ncph 
+{
+    *NOP t0
+    +U32_TO_F32 t1, r60
+    *FMA.f32 r0:t0, t1, 0x3b800000 /* 0.003906 */, 0xbf000000 /* -0.500000 */
+    +U32_TO_F32 t1, r61
+    *FMA.f32 r1:t0, t1, 0x3b800000 /* 0.003906 */, 0xbf000000 /* -0.500000 */
+    +NOP t1
+    *FMA.f32 r0:t0, r0, 0x40400000 /* 3.000000 */, #0.neg
+    +NOP t1
+    *FMA.f32 r1:t0, r1, 0x40400000 /* 3.000000 */, #0.neg
+    +MOV.i32 r2:t1, 0x00000000 /* 0.000000 */
+    *NOP t0
+    +MOV.i32 r3:t1, t1
+}
+
+clause_6:
+ds(0) nbb r_uncond ncph 
+{
+    *NOP t0
+    +MOV.i32 t1, 0xffffffff /* -nan */
+    *CSEL.s32.gt t0, u0.w0, t1, u0.w0, t1
+    +NOP t1
+    *CSEL.s32.gt r4:t0, 0x00000001 /* 0.000000 */, t0, t0, 0x00000001 /* 0.000000 */
+    +NOP t1
+    *NOP t0
+    +IABS.s32 t1, u0.w0
+    *RSHIFT_OR.i32 t0, t1, #0, 0x00000002 /* 0.000000 */
+    +NOP t1
+    *IMUL.i32 t0, r4, t0
+    +ICMP.s32.m1.ge t1, r2, t
+    *NOP t0
+    +BRANCHZ.i16.eq t1, t1.h0, clause_14
+}
+
+clause_12:
+ds(0) nbb 
+{
+    *NOP t0
+    +JUMP t1, clause_36
+}
+
+clause_14:
+ds(0) nbb ncph 
+{
+    *NOP t0
+    +MOV.i32 r4:t1, r1
+}
+
+clause_15:
+ds(0) nbb ncph 
+{
+    *FMA.f32 r4:t0, r1, r4, #0.neg
+    +MOV.i32 t1, r0
+    *FMA.f32 r5:t0, r0, t1, t0
+    +NOP t1
+    *NOP t0
+    +IADD.s32 t1, r3, 0x00000001 /* 0.000000 */
+    *FCMP.f32.lt.m1 t0, r5, 0x41200000 /* 10.000000 */
+    +MUX.i32 r3:t1, r3, t1, t
+    *NOP t0
+    +MOV.i32 t1, r0
+    *FMA.f32 t0, r0, t1, 0x3f49db23 /* 0.788500 */
+    +FADD.f32 r4:t1, t, r4.neg
+    *MOV.i32 t0, r0
+    +FADD.f32 t1, r0, t
+    *FMA.f32 r0:t0, t1, r1, #0.neg
+    +NOP t1
+}
+
+clause_22:
+ds(0) nbb ncph 
+{
+    *FMA.f32 r1:t0, r0, r0, #0.neg
+    +NOP t1
+    *FMA.f32 t0, r4, r4, t0
+    +IADD.s32 t1, r3, 0x00000001 /* 0.000000 */
+    *FCMP.f32.lt.m1 t0, t0, 0x41200000 /* 10.000000 */
+    +MUX.i32 r3:t1, r3, t1, t
+    *FMA.f32 r5:t0, r4, r4, 0x3f49db23 /* 0.788500 */
+    +FADD.f32 t1, r4, r4
+    *FMA.f32 r0:t0, t1, r0, #0.neg
+    +NOP t1
+    *FMA.f32 r4:t0, t0, t0, #0.neg
+    +FADD.f32 r1:t1, r5, r1.neg
+    *FMA.f32 t0, t1, t1, t0
+    +IADD.s32 t1, r3, 0x00000001 /* 0.000000 */
+    *FCMP.f32.lt.m1 t0, t0, 0x41200000 /* 10.000000 */
+    +MUX.i32 r3:t1, r3, t1, t
+}
+
+clause_29:
+ds(0) nbb r_uncond 
+{
+    *FMA.f32 r5:t0, r1, r1, 0x3f49db23 /* 0.788500 */
+    +FADD.f32 t1, r1, r1
+    *FMA.f32 r1:t0, t1, r0, #0.neg
+    +NOP t1
+    *FMA.f32 r0:t0, t0, t0, #0.neg
+    +FADD.f32 r4:t1, r5, r4.neg
+    *FMA.f32 t0, t1, t1, t0
+    +IADD.s32 t1, r3, 0x00000001 /* 0.000000 */
+    *FCMP.f32.lt.m1 t0, t0, 0x41200000 /* 10.000000 */
+    +MUX.i32 r3:t1, r3, t1, t
+    *FMA.f32 t0, r4, r4, 0x3f49db23 /* 0.788500 */
+    +FADD.f32 r0:t1, t, r0.neg
+    *FADD.f32 t0, r4, r4
+    +IADD.s32 r2:t1, r2, 0x00000001 /* 0.000000 */
+    *FMA.f32 r1:t0, t0, r1, #0.neg
+    +JUMP t1, clause_6
+}
+
+clause_36:
+ds(0) nbb ncph 
+{
+    *MOV.i32 t0, r3
+    +S32_TO_F32 r0:t1, t
+    *NOP t0
+    +S32_TO_F32 t1, u0.w0
+    *NOP t0
+    +FRCP.f32 t1, t1
+    *FMA.f32 r0:t0, r0, t1, #0.neg
+    +NOP t1
+}
+
+clause_39:
+ds(0) nbb ncph 
+{
+    *FMA.f32 r1:t0, 0x43960000 /* 300.000000 */, r0, #0.neg
+    +NOP t1
+    *FMA.f32 r2:t0, t0, 0x3f22f98c /* 0.636620 */, 0x49400000 /* 786432.000000 */
+    +FADD.f32 t1, t, 0x49400000 /* 786432.000000 */.neg
+    *FMA.f32 r1:t0, t1, 0xbfc90fd0 /* -1.570795 */, r1
+    +FSIN_TABLE.u6 r3:t1, t0
+    *FMA_RSCALE.f32 t0, t0, t0, #0.neg, 0xffffffff /* -nan */
+    +FCOS_TABLE.u6 r2:t1, r2
+    *FMA.f32 t0, t0, t1.neg, #0.neg
+    +NOP t1
+    *FMA.f32.clamp_m1_1 t0, r1, r3.neg, t0
+    +NOP t1
+    *NOP t0
+    +FADD.f32 r1:t1, t0, r2
+    *FMA.f32 r2:t0, 0x43f00000 /* 480.000000 */, r0, #0.neg
+    +NOP t1
+}
+
+clause_46:
+ds(0) nbb ncph next_attr 
+{
+    *FMA.f32 r3:t0, r2, 0x3f22f98c /* 0.636620 */, 0x49400000 /* 786432.000000 */
+    +FADD.f32 t1, t, 0x49400000 /* 786432.000000 */.neg
+    *FMA.f32 r2:t0, t1, 0xbfc90fd0 /* -1.570795 */, r2
+    +FSIN_TABLE.u6 r4:t1, t0
+    *FMA_RSCALE.f32 t0, t0, t0, #0.neg, 0xffffffff /* -nan */
+    +FCOS_TABLE.u6 r3:t1, r3
+    *FMA.f32 t0, t0, t1.neg, #0.neg
+    +NOP t1
+    *FMA.f32.clamp_m1_1 t0, r2, r4.neg, t0
+    +NOP t1
+    *FMA.f32 r0:t0, 0x44250000 /* 660.000000 */, r0, #0.neg
+    +FADD.f32 r2:t1, t0, r3
+    *FMA.f32 r3:t0, t0, 0x3f22f98c /* 0.636620 */, 0x49400000 /* 786432.000000 */
+    +NOP t1
+    *NOP t0
+    +FADD.f32 r4:t1, t0, 0x49400000 /* 786432.000000 */.neg
+}
+
+clause_53:
+ds(0) nbb attr ncph next_store dwb(0) 
+{
+    *FMA.f32 r0:t0, r4, 0xbfc90fd0 /* -1.570795 */, r0
+    +FSIN_TABLE.u6 r4:t1, r3
+    *FMA_RSCALE.f32 t0, t0, t0, #0.neg, 0xffffffff /* -nan */
+    +FCOS_TABLE.u6 r3:t1, r3
+    *FMA.f32 t0, t0, t1.neg, #0.neg
+    +NOP t1
+    *FMA.f32.clamp_m1_1 t0, r0, r4.neg, t0
+    +NOP t1
+    *NOP t0
+    +FADD.f32 t1, t0, r3
+    *FMA.f32 t0, t1, 0x3f000000 /* 0.500000 */, #0.neg
+    +FADD.f32 t1, 0x3f000000 /* 0.500000 */, t.neg
+    *MOV.i32 r3:t0, t1
+    +MKVEC.v2i16 t1, r60, r61
+    *DTSEL_IMM.attribute_1 t0, t1
+    +LEA_ATTR_TEX.f32 t1, t, #0.x, #0.x, @r5
+}
+
+clause_60:
+ds(0) eos store 
+{
+    *FMA.f32 t0, r1, 0x3f000000 /* 0.500000 */, #0.neg
+    +FADD.f32 r1:t1, 0x3f000000 /* 0.500000 */, t.neg
+    *FMA.f32 t0, r2, 0x3f000000 /* 0.500000 */, #0.neg
+    +FADD.f32 r2:t1, 0x3f000000 /* 0.500000 */, t.neg
+    *NOP t0
+    +MOV.i32 r4:t1, 0x3f800000 /* 1.000000 */
+    *NOP t0
+    +ST_CVT.v4 t1, r5, r6, r7, @r1
+}
+
+shader14548 - MESA_SHADER_COMPUTE shader: 0 inst, 0 bundles, 0 quadwords, 0 registers, 4 threads, 0 loops, 0:0 spills:fills
+</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> grid_run(test, localx<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">8</span>,<span class="dv">16</span>,<span class="dv">32</span>,<span class="dv">64</span>,<span class="dv">128</span>,<span class="dv">256</span>], localy<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">8</span>,<span class="dv">16</span>,<span class="dv">32</span>,<span class="dv">64</span>,<span class="dv">128</span>,<span class="dv">256</span>])</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>grid_show(r, colorfun<span class="op">=</span><span class="kw">lambda</span> x: <span class="op">-</span>np.log(x))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<p><img src="A2. Estimate GFLOPS (iterative computation, fractals)_files/figure-html/cell-6-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
