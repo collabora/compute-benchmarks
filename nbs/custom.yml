@@ -1,0 +1,11 @@
+format:
+  html:
+    theme:
+    - cosmo
+    - collabora.scss 
+
+website:
+  navbar:
+    background: primary
+    search: true
+    logo: imgs/logo.svg

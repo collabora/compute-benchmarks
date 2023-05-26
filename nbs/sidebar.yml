@@ -1,0 +1,19 @@
+website:
+  sidebar:
+    tools: 
+      - icon: twitter
+        href: https://twitter.com/jpclap
+      - icon: github
+        href:  https://github.com/collabora/compute-benchmarks
+    contents:
+      - index.ipynb
+      - text: "---"
+      - section: Experiments
+        contents:
+        - A1. Estimate GFLOPS (dot products, no loops).ipynb
+        - A2. Estimate GFLOPS (iterative computation, fractals).ipynb
+      - text: "---"
+      - section: Helper utilities
+        contents:
+        - X1. gl_helpers.ipynb
+        - X2. gridrun.ipynb

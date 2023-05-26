@@ -3,7 +3,9 @@ project:
 
 format:
   html:
-    theme: cosmo
+    theme:
+    - cosmo
+    - collabora.scss 
     css: styles.css
     toc: true
 
@@ -14,6 +16,7 @@ website:
   navbar:
     background: primary
     search: true
+    logo: imgs/logo.svg
   sidebar:
     style: floating
 

@@ -2,7 +2,7 @@ project:
   output-dir: _docs
 
 website:
-  title: "compute-benchmarks"
+  title: "Benchmarking mobile GPUs"
   site-url: "https://jpc.github.io/compute-benchmarks"
   description: "Compute benchmarks for Linux"
   repo-branch: main
