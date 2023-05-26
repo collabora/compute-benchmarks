@@ -2,8 +2,8 @@
 
 d = { 'settings': { 'branch': 'main',
                 'doc_baseurl': '/compute-benchmarks',
-                'doc_host': 'https://jpc.github.io',
-                'git_url': 'https://github.com/jpc/compute-benchmarks',
+                'doc_host': 'https://collabora.github.io',
+                'git_url': 'https://github.com/collabora/compute-benchmarks',
                 'lib_path': 'compute_benchmarks'},
   'syms': { 'compute_benchmarks.gl_helpers': { 'compute_benchmarks.gl_helpers.computeShader': ( 'gl_helpers.html#computeshader',
                                                                                                 'compute_benchmarks/gl_helpers.py'),

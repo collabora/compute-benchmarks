@@ -3,7 +3,7 @@ project:
 
 website:
   title: "Benchmarking mobile GPUs"
-  site-url: "https://jpc.github.io/compute-benchmarks"
+  site-url: "https://collabora.github.io/compute-benchmarks"
   description: "Compute benchmarks for Linux"
   repo-branch: main
-  repo-url: "https://github.com/jpc/compute-benchmarks"
+  repo-url: "https://github.com/collabora/compute-benchmarks"
