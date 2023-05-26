@@ -10,7 +10,7 @@ research](https://github.com/terryky/tflite_gles_app#object-detection-ssd_mobile
 we noticed we are not alone with this problem:
 
 ![GPU/CPU neural network speed comparison for
-RPi4](https://collabora.github.io/compute-benchmarks/imgs/gpu-speed-on-rpi4.png)
+RPi4](https://raw.githubusercontent.com/collabora/compute-benchmarks/6eaa3f2143d6858d7fcf358b5c6df8eb126693aa/nbs/imgs/gpu-speed-on-rpi4.png)
 
 This seems to be a recurring theme: GPU performance seems to be good on
 NVidia SoCs and on everything else the ARM CPU is up to 10x faster than
@@ -33,7 +33,7 @@ A2](https://github.com/DingXiaoH/RepVGG) which was the precursor to
 mobile-friendly backbone):
 
 ![RepVGG
-teardown](https://collabora.github.io/compute-benchmarks/imgs/RepVGG-teardown.png)
+teardown](https://raw.githubusercontent.com/collabora/compute-benchmarks/6eaa3f2143d6858d7fcf358b5c6df8eb126693aa/nbs/imgs/RepVGG-teardown.png)
 
 It is composed of 21 convolutional layers (with a nonlinear activation
 function applied to each output). The layers which do not change the
